@@ -15,7 +15,7 @@ export class OrdersService {
     return `This action returns a #${id} order`;
   }
 
-  setStatus() {
-    throw new NotImplementedException();
+  setStatus(id: number) {
+    return `This action set status to order #${id}`;
   }
 }
