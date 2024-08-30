@@ -1,0 +1,3 @@
+# Esto le indicará a Git que maneje automáticamente los finales de línea apropiados para cada sistema operativo:
+# Es por aquel mensaje de Git: warning: in the working copy of '~/xys.xys' file, LF will be replaced by CRLF the next time Git touches it
+* text=auto 
