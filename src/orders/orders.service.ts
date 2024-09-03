@@ -15,15 +15,15 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     return await this.order.create({ data: createOrderDto });
   }
 
-  findAll() {
-    return `This action returns all orders`;
+  async findAll() {
+    return await this.order.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
+  async findOne(id: string) {
+    return await this.order.findFirst({ where: { id } });
   }
 
-  setStatus(id: number) {
+  setStatus(id: string) {
     return `This action set status to order #${id}`;
   }
 }

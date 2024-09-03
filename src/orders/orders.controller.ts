@@ -18,12 +18,12 @@ export class OrdersController {
   }
 
   @MessagePattern({ cmd: 'getById' })
-  findOne(@Payload('id') id: number) {
+  findOne(@Payload('id') id: string) {
     return this.ordersService.findOne(id);
   }
 
   @MessagePattern({ cmd: 'setStatus' })
-  setStatus(@Payload('id') id: number) {
+  setStatus(@Payload('id') id: string) {
     return this.ordersService.setStatus(id);
   }
 }
