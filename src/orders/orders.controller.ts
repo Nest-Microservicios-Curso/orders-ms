@@ -2,6 +2,7 @@ import { Controller, ParseUUIDPipe } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrdersPaginationDto } from './dto';
 
 @Controller()
 export class OrdersController {
@@ -13,8 +14,8 @@ export class OrdersController {
   }
 
   @MessagePattern({ cmd: 'getAll' })
-  findAll() {
-    return this.ordersService.findAll();
+  findAll(@Payload() orderPaginationDto: OrdersPaginationDto) {
+    return this.ordersService.findAll(orderPaginationDto);
   }
 
   @MessagePattern({ cmd: 'getById' })
