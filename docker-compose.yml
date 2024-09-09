@@ -12,4 +12,4 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123456
-      - POSTGRES_BD=db_orders
+      - POSTGRES_DB=orders_db_dkr
