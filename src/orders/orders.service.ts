@@ -1,15 +1,29 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import {
   CreateOrderDto,
   OrdersPaginationDto,
   UpdateOrderStatusDto,
 } from './dto';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { PRODUCTS_SERVICE } from 'src/config';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger('OrdersService');
+
+  constructor(
+    @Inject(PRODUCTS_SERVICE) private readonly productsMSClient: ClientProxy,
+  ) {
+    super();
+  }
 
   async onModuleInit() {
     await this.$connect();
@@ -17,7 +31,49 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
   }
 
   async create(createOrderDto: CreateOrderDto) {
-    return createOrderDto;
+    try {
+      // ? products exists?:
+      const productsIds: number[] = createOrderDto.items.map(
+        (item) => item.idProduct,
+      );
+
+      const productsValidated: any[] = await firstValueFrom(
+        this.productsMSClient.send({ cmd: 'validateProduct' }, productsIds),
+      );
+
+      // ? order header(master):
+      const totalAmount = createOrderDto.items.reduce(
+        (acumulatedValue, orderItem) => {
+          const price = productsValidated.find(
+            (product) => product.id === orderItem.idProduct,
+          ).price;
+
+          return acumulatedValue + orderItem.quantity * price;
+        },
+        0,
+      );
+
+      const totalItems = createOrderDto.items.reduce((acc, orderItem) => {
+        return acc + orderItem.quantity;
+      }, 0);
+
+      //* insert into db:
+      const order = await this.order.create({
+        data: {
+          totalAmount: totalAmount,
+          totoalItems: totalItems,
+          orderItem: {
+            createMany: {
+              data: [],
+            },
+          },
+        },
+      });
+
+      return { order };
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   async findAll(orderPaginationDto: OrdersPaginationDto) {
