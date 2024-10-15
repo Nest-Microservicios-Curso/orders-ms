@@ -64,13 +64,36 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
           totoalItems: totalItems,
           orderItem: {
             createMany: {
-              data: [],
+              data: createOrderDto.items.map((orderItem) => ({
+                productId: orderItem.idProduct,
+                quantity: orderItem.quantity,
+                price: productsValidated.find(
+                  (product) => product.id === orderItem.idProduct,
+                ).price,
+              })),
+            },
+          },
+        },
+        include: {
+          orderItem: {
+            select: {
+              productId: true,
+              quantity: true,
+              price: true,
             },
           },
         },
       });
 
-      return { order };
+      return {
+        ...order,
+        orderItem: order.orderItem.map((item) => ({
+          ...item,
+          name: productsValidated.find(
+            (product) => product.id === item.productId,
+          ).name,
+        })),
+      };
     } catch (error) {
       throw new RpcException(error);
     }
