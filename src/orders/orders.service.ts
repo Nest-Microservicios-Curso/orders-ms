@@ -14,6 +14,7 @@ import {
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PRODUCTS_SERVICE } from 'src/config';
 import { firstValueFrom } from 'rxjs';
+import { resourceUsage } from 'process';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -127,7 +128,18 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
   }
 
   async findOne(id: string) {
-    const result = await this.order.findFirst({ where: { id } });
+    const result = await this.order.findFirst({
+      where: { id },
+      include: {
+        orderItem: {
+          select: {
+            productId: true,
+            price: true,
+            quantity: true,
+          },
+        },
+      },
+    });
 
     if (!result)
       throw new RpcException({
@@ -135,7 +147,19 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
         message: `Order(#${id}) not found`,
       });
 
-    return result;
+    const productIds = result.orderItem.map((item) => item.productId);
+
+    const products: any[] = await firstValueFrom(
+      this.productsMSClient.send({ cmd: 'validateProduct' }, productIds),
+    );
+
+    return {
+      ...result,
+      orderItem: result.orderItem.map((item) => ({
+        ...item,
+        name: products.find((product) => product.id === item.productId).name,
+      })),
+    };
   }
 
   async setStatus(updateOrderStatusDto: UpdateOrderStatusDto) {
