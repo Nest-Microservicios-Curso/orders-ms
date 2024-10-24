@@ -14,7 +14,6 @@ import {
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PRODUCTS_SERVICE } from 'src/config';
 import { firstValueFrom } from 'rxjs';
-import { resourceUsage } from 'process';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
