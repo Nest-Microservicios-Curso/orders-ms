@@ -12,16 +12,14 @@ import {
   UpdateOrderStatusDto,
 } from './dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { PRODUCTS_SERVICE } from 'src/config';
+import { NATS_SERVICE } from 'src/config';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger('OrdersService');
 
-  constructor(
-    @Inject(PRODUCTS_SERVICE) private readonly productsMSClient: ClientProxy,
-  ) {
+  constructor(@Inject(NATS_SERVICE) private readonly natsClient: ClientProxy) {
     super();
   }
 
@@ -38,7 +36,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
       );
 
       const productsValidated: any[] = await firstValueFrom(
-        this.productsMSClient.send({ cmd: 'validateProduct' }, productsIds),
+        this.natsClient.send({ cmd: 'validateProduct' }, productsIds),
       );
 
       // ? order header(master):
@@ -149,7 +147,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     const productIds = result.orderItem.map((item) => item.productId);
 
     const products: any[] = await firstValueFrom(
-      this.productsMSClient.send({ cmd: 'validateProduct' }, productIds),
+      this.natsClient.send({ cmd: 'validateProduct' }, productIds),
     );
 
     return {
